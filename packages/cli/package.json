@@ -1,0 +1,23 @@
+{
+  "name": "@viwo/cli",
+  "version": "1.0.0",
+  "description": "viwo的脚手架",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsup --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "clipanion": "4.0.0-rc.2",
+    "debug": "^4.3.4"
+  },
+  "bin": {
+    "viwo": "./bin/index.js"
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.8"
+  }
+}

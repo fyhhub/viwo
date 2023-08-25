@@ -1,0 +1,32 @@
+{
+  "name": "viwo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "scripts": {
+    "dev": "pnpm --filter=@viwo/cli run dev",
+    "build": "tsup"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.5.6",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^8.1.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "5.0.0",
+    "eslint-plugin-vue": "^9.17.0",
+    "prettier": "3.0.1",
+    "tsup": "^7.2.0",
+    "typescript": "^5.0.4"
+  }
+}
