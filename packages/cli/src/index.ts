@@ -1,1 +1,1 @@
-import './cli';
+export { bundless } from './bundless';

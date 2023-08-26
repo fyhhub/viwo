@@ -2,9 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "baseUrl": ".",
-    "paths": {
-      "@/*": ["*"],
-    },
-    "target": "ESNext"
-  }
+    "target": "ESNext",
+    "outDir": "dist"
+  },
+  "include": ["src/**/*.ts"]
 }

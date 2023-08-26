@@ -1,9 +1,16 @@
 import { Command, Option } from 'clipanion';
-
+import { bundless } from '../bundless';
+import '../builder';
 export class BundlessCommand extends Command {
   static paths = [[`bundless`]];
+  watch = Option.Boolean(`--watch`);
   async execute() {
-    this.context.stdout.write(`Hello !\n`);
-    console.log('%c Line:7 🍻 this.context', 'color:#465975', this.context);
+    bundless({
+      input: './packages/cli/src',
+      root: process.cwd(),
+      format: 'esm',
+      output: './packages/cli/lib',
+      watch: this.watch
+    });
   }
 }
