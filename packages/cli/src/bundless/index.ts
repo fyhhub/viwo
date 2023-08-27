@@ -10,6 +10,8 @@ import fs from 'fs';
 import { runLoaders } from './loaders';
 import { chokidar, lodash, rimraf, winPath } from '@umijs/utils';
 import getDeclarations from './dts';
+import { initialLoaders } from '../builder';
+
 const logger = createLogger('info');
 const debug = createDebugger(`viwo:config`);
 
@@ -25,60 +27,65 @@ async function transformFiles(
     debug('matches', matches);
     let count = 0;
     const declarationFileMap = new Map<string, string>();
-    for (const item of params.matches) {
-      const itemAbsPath = path.join(opts.root!, item);
-      let itemDistPath = path.join(
-        opts.output!,
-        path.relative(opts.input!, item)
-      );
-      let itemDistAbsPath = path.join(opts.root!, itemDistPath);
-      const originItemDistAbsPath = itemDistAbsPath;
-      debug('distPath', itemDistAbsPath);
-      const parentPath = path.dirname(itemDistPath);
 
-      if (!fs.existsSync(parentPath)) {
-        fs.mkdirSync(parentPath, { recursive: true });
-      }
-      const result = await runLoaders(itemAbsPath, {
-        config: opts,
-        pkg,
-        itemDistAbsPath
-      });
-      if (result) {
-        debug('runLoaders', result.options);
-        // update ext if loader specified
-        if (result.options.ext) {
-          itemDistPath = replacePathExt(itemDistPath, result.options.ext);
-          itemDistAbsPath = replacePathExt(itemDistAbsPath, result.options.ext);
+    await Promise.all(
+      params.matches.map(async item => {
+        const itemAbsPath = path.join(opts.root!, item);
+        let itemDistPath = path.join(
+          opts.output!,
+          path.relative(opts.input!, item)
+        );
+        let itemDistAbsPath = path.join(opts.root!, itemDistPath);
+        debug('distPath', itemDistAbsPath);
+        const parentPath = path.dirname(itemDistPath);
+
+        if (!fs.existsSync(parentPath)) {
+          fs.mkdirSync(parentPath, { recursive: true });
+        }
+        const result = await runLoaders(itemAbsPath, {
+          config: opts,
+          pkg,
+          itemDistAbsPath
+        });
+        if (result) {
+          debug('runLoaders', result.options);
+          // update ext if loader specified
+          if (result.options.ext) {
+            itemDistPath = replacePathExt(itemDistPath, result.options.ext);
+            itemDistAbsPath = replacePathExt(
+              itemDistAbsPath,
+              result.options.ext
+            );
+          }
+
+          // prepare for declaration
+          if (result.options.declaration) {
+            // use winPath because ts compiler will convert to posix path
+            declarationFileMap.set(winPath(itemAbsPath), parentPath);
+          }
+
+          if (result.options.map) {
+            const map = result.options.map;
+            const mapLoc = `${itemDistAbsPath}.map`;
+
+            fs.writeFileSync(mapLoc, map);
+          }
+
+          // distribute file with result
+          fs.writeFileSync(itemDistAbsPath, result.content);
+        } else {
+          // copy file as normal assets
+          fs.copyFileSync(itemAbsPath, itemDistAbsPath);
         }
 
-        // prepare for declaration
-        if (result.options.declaration) {
-          // use winPath because ts compiler will convert to posix path
-          declarationFileMap.set(winPath(itemAbsPath), parentPath);
-        }
-
-        if (result.options.map) {
-          const map = result.options.map;
-          const mapLoc = `${itemDistAbsPath}.map`;
-
-          fs.writeFileSync(mapLoc, map);
-        }
-
-        // distribute file with result
-        fs.writeFileSync(itemDistAbsPath, result.content);
-      } else {
-        // copy file as normal assets
-        fs.copyFileSync(itemAbsPath, itemDistAbsPath);
-      }
-
-      logger.info(
-        `Bundless ${chalk.gray(item)} to ${chalk.gray(itemDistPath)}${
-          result?.options.declaration ? ' (with declaration)' : ''
-        }`
-      );
-      count += 1;
-    }
+        logger.info(
+          `Bundless ${chalk.gray(item)} to ${chalk.gray(itemDistPath)}${
+            result?.options.declaration ? ' (with declaration)' : ''
+          }`
+        );
+        count += 1;
+      })
+    );
 
     if (declarationFileMap.size) {
       logger.info(
@@ -121,6 +128,7 @@ export async function bundless(opts: ViwoBundlessConfig) {
 
   const startTime = Date.now();
   opts.root = opts.root ?? process.cwd();
+  opts.platform = opts.platform ?? 'browser';
 
   debug('config', opts);
   const pkgPath = getPkgPath();
@@ -131,6 +139,14 @@ export async function bundless(opts: ViwoBundlessConfig) {
 
   debug('pkgPath', pkgPath);
   const pkg = pkgPath ? require(pkgPath) : {};
+
+  const distDir = path.join(opts.root!, opts.output!);
+  if (opts.clean && fs.existsSync(distDir)) {
+    rimraf.sync(distDir);
+    logger.info('Remove Dist ' + distDir);
+  }
+
+  initialLoaders(opts);
 
   const matches = sync(`${opts.input}/**`, {
     cwd: opts.root || process.cwd(),

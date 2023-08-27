@@ -47,6 +47,7 @@ export interface ILoaderOutput {
 }
 
 export interface ViwoBundlessConfig {
+  platform?: 'node' | 'browser';
   format: 'esm' | 'commonjs';
   /**
    * 输入文件, 需要传入相对路径
@@ -91,8 +92,13 @@ export interface ViwoBundlessConfig {
   esbuildPlugins?: any[];
 
   babelPlugins?: any[];
+  babelPresets?: any[];
 
   watch?: boolean;
 
   root?: string;
+
+  clean?: boolean;
+
+  vue: 2.7 | 3;
 }

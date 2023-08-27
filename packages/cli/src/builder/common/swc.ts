@@ -2,7 +2,11 @@ import { winPath } from '@umijs/utils';
 import { lstatSync } from 'fs';
 import path from 'path';
 import { IJSLoader } from '../types';
-import { addSourceMappingUrl, ensureRelativePath } from '../utils';
+import {
+  addSourceMappingUrl,
+  ensureRelativePath,
+  getBundlessTargets
+} from '../utils';
 import { ViwoBundlessConfig } from '../../bundless/types';
 
 const isTs = (p: string): boolean => p.endsWith('.ts') || p.endsWith('.tsx');
@@ -116,16 +120,15 @@ const swcLoader: IJSLoader = async function (content) {
       : undefined,
     sourceMaps: this.config.sourcemap,
     env: {
-      targets: this.config.targets
+      targets: getBundlessTargets(this.config)
     },
-
     jsc: {
       baseUrl: this.paths.cwd,
       paths: alias,
       parser: {
         syntax: isTSFile ? 'typescript' : 'ecmascript',
-        ...(isTSFile && isJSXFile ? { tsx: true } : {}),
-        ...(!isTSFile && isJSXFile ? { jsx: true } : {})
+        ...(isTSFile && isJSXFile ? { tsx: false } : {}),
+        ...(!isTSFile && isJSXFile ? { jsx: false } : {})
       }
     },
     module: {

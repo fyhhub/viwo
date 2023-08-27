@@ -66,4 +66,4 @@ export type IJSLoader = (
     setOutputOptions: (optps: ILoaderOutput['options']) => void;
   },
   content: Parameters<IBundlessLoader>[0]
-) => Promise<void> | string;
+) => Promise<void> | string | void;
